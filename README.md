@@ -108,10 +108,10 @@ provision a TLS certificate automatically once the domain resolves; then enable
 - Support / contact: `https://haliteinvestments.com/support/`
 - Website: `https://haliteinvestments.com/`
 
-## Placeholders to confirm
-- **`support@haliteinvestments.com`** — used on the Privacy and Support pages.
-  Configure this mailbox (or replace with the real support address) before
-  submitting to Google Play.
+## Contact email
+- **`haliteinvestments@gmail.com`** — the support/contact address used on the
+  Privacy and Support pages (and to enter in Google Play). Swap to a custom
+  `@haliteinvestments.com` address later if desired.
 
 ## Editing
 Every page is a standalone HTML file sharing `/styles.css`. Update the year or
