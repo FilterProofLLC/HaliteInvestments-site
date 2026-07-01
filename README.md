@@ -109,9 +109,15 @@ provision a TLS certificate automatically once the domain resolves; then enable
 - Website: `https://haliteinvestments.com/`
 
 ## Contact email
-- **`haliteinvestments@gmail.com`** — the support/contact address used on the
+- **`Haliteinvestments@gmail.com`** — the support/contact address used on the
   Privacy and Support pages (and to enter in Google Play). Swap to a custom
   `@haliteinvestments.com` address later if desired.
+
+## HaliteHomes status
+HaliteHomes is in **Android open testing (beta)**. The Google Play open-testing
+listing is linked from the homepage, HaliteHomes page, and Support page:
+`https://play.google.com/store/apps/details?id=com.haliteinvestments.halitehomes`
+Android only for now — iOS is not currently supported.
 
 ## Editing
 Every page is a standalone HTML file sharing `/styles.css`. Update the year or

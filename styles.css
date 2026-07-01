@@ -128,6 +128,16 @@ li { margin: 4px 0; }
 .persona h3 { margin: 0 0 4px; }
 .pill { display: inline-block; background: #e4eef5; color: var(--blue); border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700; }
 .pill.soon { background: #e3f2ea; color: var(--green); }
+.pill.beta { background: #e0f2f7; color: var(--teal); }
+
+/* Beta announcement / call-to-action */
+.beta-cta { background: linear-gradient(160deg, var(--blue), var(--teal)); color: #fff; border-radius: 14px; padding: 22px 24px; }
+.beta-cta h2 { color: #fff; margin-top: 0; }
+.beta-cta p { color: #e8f6fb; margin: 8px 0; }
+.beta-cta .btn { background: #fff; color: var(--blue); margin-top: 6px; }
+.beta-cta .btn:hover { background: #eaf3f8; color: var(--navy); }
+.hero .btn { margin-top: 16px; background: var(--aqua); color: var(--navy); }
+.hero .btn:hover { background: #fff; color: var(--navy); }
 
 .note { background: #eef6f8; border: 1px solid #cde7ee; border-radius: 12px; padding: 14px 18px; }
 
