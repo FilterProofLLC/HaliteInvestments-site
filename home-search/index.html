@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Halite Home Search</title>
+<meta name="description" content="Halite Home Search — map-based for-sale property explorer for the Phoenix East Valley. Sample/example data.">
+<link rel="canonical" href="https://haliteinvestments.com/home-search/">
+<link rel="icon" href="/assets/favicon.png" type="image/png">
+<meta name="robots" content="index,follow">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<style>
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(images/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+</style>
+<style>
+:root{
+  --bg:#0f1115; --panel:rgba(18,21,27,.88); --panel-brd:rgba(255,255,255,.14);
+  --ink:#f2f4f7; --ink-dim:#aeb4bd; --accent:#5ec8d8;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink)}
+#map{position:absolute;inset:0;background:var(--bg)}
+.panel{
+  position:absolute;top:12px;left:12px;z-index:1000;width:310px;max-width:calc(100vw - 24px);
+  max-height:calc(100vh - 24px);overflow:auto;
+  background:var(--panel);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid var(--panel-brd);border-radius:12px;padding:14px 14px 13px;
+  box-shadow:0 8px 28px rgba(0,0,0,.45);
+}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.panel h1{font-size:15px;margin:0;letter-spacing:.2px}
+.toggle{flex:none;width:26px;height:26px;border-radius:7px;cursor:pointer;line-height:1;
+  font-size:17px;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--panel-brd)}
+.toggle:hover{background:rgba(255,255,255,.14)}
+.panel.collapsed{width:auto}
+.panel.collapsed #pbody{display:none}
+.sub{font-size:11.5px;color:var(--ink-dim);margin:8px 0 10px}
+.lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-dim);
+  margin:12px 0 6px;display:flex;justify-content:space-between;align-items:baseline}
+.lbl .val{color:var(--accent);font-weight:700;letter-spacing:0;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:5px 10px;border-radius:999px;cursor:pointer;user-select:none;
+  background:rgba(255,255,255,.06);border:1px solid var(--panel-brd);color:var(--ink)}
+.chip:hover{background:rgba(255,255,255,.12)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#06222a;font-weight:600}
+select{width:100%;font-size:13px;padding:7px 8px;border-radius:8px;color:var(--ink);
+  background:rgba(255,255,255,.06);border:1px solid var(--panel-brd)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0;cursor:pointer}
+.chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);flex-wrap:wrap}
+.chk input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.chk input[type=number]{width:52px;font-size:12px;padding:3px 5px;border-radius:6px;color:var(--ink);
+  background:rgba(255,255,255,.06);border:1px solid var(--panel-brd);font-variant-numeric:tabular-nums}
+.legend{margin-top:14px}
+.bar{height:12px;border-radius:6px;border:1px solid var(--panel-brd);
+  background:linear-gradient(90deg,#2c7bb6,#abd9e9,#ffffbf,#fdae61,#d7191c)}
+.ends{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-dim);margin-top:4px}
+.ticks{display:flex;justify-content:space-between;font-size:11px;margin-top:3px;font-variant-numeric:tabular-nums}
+.scale{display:flex;gap:8px;align-items:center;margin-top:8px}
+.scale label{flex:1;font-size:10.5px;color:var(--ink-dim);display:flex;flex-direction:column;gap:3px}
+.scale input{width:100%;font-size:12px;padding:5px 6px;border-radius:7px;color:var(--ink);
+  background:rgba(255,255,255,.06);border:1px solid var(--panel-brd);
+  font-variant-numeric:tabular-nums}
+.scale .reset{margin-top:14px;align-self:center;white-space:nowrap}
+.count{margin-top:12px;font-size:12px;color:var(--ink-dim)}
+.count b{color:var(--ink);font-variant-numeric:tabular-nums}
+.note{margin-top:10px;font-size:11.5px;color:#ffd27f;line-height:1.35;display:none}
+.note.show{display:block}
+.reset{margin-top:10px;font-size:11px;color:var(--ink-dim);background:none;border:none;
+  cursor:pointer;text-decoration:underline;padding:0}
+.leaflet-popup-content-wrapper{background:#12151b;color:var(--ink);border-radius:10px}
+.leaflet-popup-tip{background:#12151b}
+.leaflet-popup-content{margin:10px 12px;font-size:12.5px;line-height:1.5}
+.pop-addr{font-weight:700;font-size:13px;margin-bottom:2px}
+.pop-meta{color:var(--ink-dim);margin-bottom:6px}
+.pop-row{display:flex;justify-content:space-between;gap:16px}
+.pop-row span:last-child{font-variant-numeric:tabular-nums}
+.attr{position:absolute;bottom:0;right:0;z-index:1000;font-size:10px;color:#cdd3da;
+  background:rgba(0,0,0,.45);padding:2px 6px;border-top-left-radius:6px}
+.sample{font-size:11px;color:#ffd27f;background:rgba(255,210,127,.1);border:1px solid rgba(255,210,127,.35);
+  border-radius:8px;padding:7px 9px;margin:8px 0 2px;line-height:1.35}
+.brand-link{position:absolute;top:12px;right:12px;z-index:1000;font-size:12px;font-weight:600;
+  color:var(--ink);text-decoration:none;background:var(--panel);border:1px solid var(--panel-brd);
+  border-radius:8px;padding:6px 10px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.brand-link:hover{background:rgba(255,255,255,.14)}
+.disclaimer{position:absolute;left:0;right:0;bottom:0;z-index:1001;
+  background:rgba(12,15,20,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-top:1px solid var(--panel-brd);color:var(--ink-dim);
+  padding:6px 12px calc(6px + env(safe-area-inset-bottom,0px));font-size:11.5px;line-height:1.4}
+.disclaimer summary{cursor:pointer;color:#ffd27f;font-weight:600;list-style:none}
+.disclaimer summary::-webkit-details-marker{display:none}
+.disclaimer summary::before{content:"⚠ ";}
+.disclaimer p{margin:6px 0 2px;max-width:70ch}
+.disclaimer[open] summary::after{content:" (tap to collapse)";font-weight:400;color:var(--ink-dim)}
+#map{bottom:0}
+@media(max-width:480px){.panel{width:calc(100vw - 24px)}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel" id="panel">
+  <div class="phead">
+    <h1>Halite Home Search</h1>
+    <button id="toggle" class="toggle" title="Collapse" aria-label="Collapse settings">–</button>
+  </div>
+  <div id="pbody">
+  <p class="sub">Chandler · Mesa · Gilbert · Tempe — for-sale listings</p>
+  <p class="sample">Sample / example data. Information has not been verified and calculations are still being refined.</p>
+
+  <div class="lbl">City</div>
+  <div class="chips" id="cities"></div>
+
+  <div class="lbl">Color by</div>
+  <select id="metric">
+    <option value="cost">Monthly cost (low = favorable)</option>
+    <option value="list">List price (low = favorable)</option>
+    <option value="ppsf">Price ÷ living sqft (low = favorable)</option>
+    <option value="pplot">Price ÷ lot sqft (low = favorable)</option>
+    <option value="deal">Deal vs peers (below peers = favorable)</option>
+    <option value="ratio">Rent ÷ monthly cost (high = favorable)</option>
+  </select>
+
+  <div class="lbl">Down payment <span class="val" id="downVal">5.0%</span></div>
+  <input type="range" id="down" min="3" max="40" step="0.5" value="5">
+
+  <div class="lbl">Interest rate <span class="val" id="rateVal">6.250%</span></div>
+  <input type="range" id="rate" min="2" max="10" step="0.125" value="6.25">
+
+  <button class="reset" id="reset">Reset to 5% down · 6.25%</button>
+
+  <div class="lbl">Deals filter</div>
+  <label class="chk"><input type="checkbox" id="dealsOnly">
+    Deals only — listed ≤ <input type="number" id="dealMax" value="-5" step="1"> % vs peers</label>
+
+  <div class="legend">
+    <div class="bar"></div>
+    <div class="ends"><span>Favorable</span><span>Unfavorable</span></div>
+    <div class="ticks"><span id="t0"></span><span id="t1"></span><span id="t2"></span></div>
+    <div class="scale">
+      <label>Min <input type="number" id="smin" step="any"></label>
+      <label>Max <input type="number" id="smax" step="any"></label>
+      <button class="reset" id="auto">Auto</button>
+    </div>
+  </div>
+
+  <div class="note" id="note">No rent data loaded yet — markers shown neutral. Populate the
+    <code>rent</code> column to color by this ratio (the sliders will drive it live).</div>
+
+  <div class="count"><b id="n">0</b> homes shown</div>
+  </div><!-- /pbody -->
+</div>
+<a class="brand-link" href="https://haliteinvestments.com/">← Halite Investments</a>
+<div class="attr">Imagery © Esri, Maxar, Earthstar Geographics · Listings via Redfin</div>
+<details class="disclaimer">
+  <summary>Sample / Example Data Notice</summary>
+  <p>The property data, rental estimates, valuations, monthly cost estimates, peer comparisons, and other
+  calculations shown on this page are currently provided for demonstration and evaluation purposes.
+  Information has not been independently verified and may be incomplete, outdated, or inaccurate.
+  Calculation methods and assumptions are still being refined. Do not rely on this information as a
+  substitute for verified MLS records, professional real estate advice, appraisal, lending information,
+  tax information, insurance estimates, or other professional guidance.</p>
+</details>
+
+<script>
+/* Shared monthly-cost math for HaliteHomeSearch.
+ * Used two ways from one source of truth:
+ *   - inlined into map.html by scripts/build_map.py (browser: global `Cost`)
+ *   - required by scripts/test_cost.js (Node: module.exports)
+ *
+ * down payment % and interest rate are parameters (the map's sliders).
+ * Tax / insurance / PMI rates are fixed assumptions and must match
+ * scripts/build_dataset.py.
+ */
+(function (root) {
+  var TAX = 0.0055;   // property tax, % of price / yr (Maricopa Co. effective)
+  var INS = 0.0035;   // homeowners insurance, % of price / yr
+  var PMI = 0.0040;   // PMI, % of loan / yr; applies only below 20% down
+  var N   = 360;      // 30-year term, months
+
+  // Amortizing principal & interest payment.
+  function piPayment(loan, rate) {
+    var r = rate / 12;
+    if (r === 0) return loan / N;
+    var p = Math.pow(1 + r, N);
+    return loan * r * p / (p - 1);
+  }
+
+  // Full monthly breakdown for a listing at a given down % and rate.
+  function costBreakdown(list, hoa, downPct, rate) {
+    var loan = list * (1 - downPct);
+    var pi   = piPayment(loan, rate);
+    var tax  = list * TAX / 12;
+    var ins  = list * INS / 12;
+    var pmi  = downPct < 0.20 ? loan * PMI / 12 : 0;  // drops at 20% equity
+    hoa = hoa || 0;
+    return { loan: loan, pi: pi, tax: tax, ins: ins, pmi: pmi, hoa: hoa,
+             total: pi + tax + ins + pmi + hoa };
+  }
+
+  function monthlyCost(list, hoa, downPct, rate) {
+    return costBreakdown(list, hoa, downPct, rate).total;
+  }
+
+  var api = { TAX: TAX, INS: INS, PMI: PMI, N: N,
+              piPayment: piPayment, costBreakdown: costBreakdown,
+              monthlyCost: monthlyCost };
+
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.Cost = api;
+})(typeof self !== "undefined" ? self : this);
+
+</script>
+<script>
+(async function(){
+// Data seam: listings load from a same-origin JSON file. To switch to the ARMLS
+// proxy later, point DATA_URL at it (e.g. "https://api.haliteinvestments.com/armls.php")
+// — it must return the same JSON shape. All calculations stay client-side.
+const DATA_URL = "./homes.json";
+let HOMES;
+try{ const _r = await fetch(DATA_URL, {cache:"no-store"}); if(!_r.ok) throw new Error("HTTP "+_r.status); HOMES = await _r.json(); }
+catch(e){ console.error("Home Search: could not load listing data", e); HOMES = []; }
+const CITIES = ["All","Chandler","Mesa","Gilbert","Tempe"];
+const DEFAULT_DOWN = 5, DEFAULT_RATE = 6.25;
+
+const METRICS = {
+  cost:  {favorable:"low",  step:25,    fmt:v=>"$"+Math.round(v).toLocaleString(),
+          val:(h,down,rate)=>Cost.monthlyCost(h.list,h.hoa,down/100,rate/100)},
+  list:  {favorable:"low",  step:5000,  fmt:v=>"$"+Math.round(v).toLocaleString(),
+          val:h=>h.list},
+  ppsf:  {favorable:"low",  step:5,     fmt:v=>"$"+Math.round(v)+"/ft²",
+          val:h=> (h.sf && h.sf>0) ? h.list/h.sf : null},
+  pplot: {favorable:"low",  step:5,     fmt:v=>"$"+v.toFixed(1)+"/ft²",
+          val:h=> (h.lot && h.lot>0) ? h.list/h.lot : null},
+  deal:  {favorable:"low",  step:1,     fmt:v=>(v>0?"+":"")+v.toFixed(0)+"%",
+          val:h=> h.deal},
+  ratio: {favorable:"high", step:0.05,  fmt:v=>v.toFixed(2),
+          val:(h,down,rate)=> h.rent==null ? null
+                : h.rent / Cost.monthlyCost(h.list,h.hoa,down/100,rate/100)},
+};
+
+// RdYlBu-reversed stops: t=0 favorable (blue) -> t=1 unfavorable (red)
+const STOPS=[[44,123,182],[171,217,233],[255,255,191],[253,174,97],[215,25,28]];
+function ramp(t){
+  t=Math.max(0,Math.min(1,t));
+  const x=t*(STOPS.length-1), i=Math.min(STOPS.length-2,Math.floor(x)), f=x-i;
+  const a=STOPS[i], b=STOPS[i+1];
+  return `rgb(${a.map((c,k)=>Math.round(c+(b[k]-c)*f)).join(",")})`;
+}
+function pct(arr,p){ if(!arr.length)return null;
+  const s=[...arr].sort((a,b)=>a-b);
+  return s[Math.max(0,Math.min(s.length-1,Math.round((s.length-1)*p)))]; }
+
+let state={city:"All",metric:"cost",down:DEFAULT_DOWN,rate:DEFAULT_RATE,dealsOnly:false,dealMax:-5};
+
+// Fixed, user-settable color domain per metric. The scale does NOT auto-adjust to
+// the view or the sliders; editing Min/Max (or Auto) changes it, and dots recolor.
+function roundTo(v,step,dir){ return dir<0 ? Math.floor(v/step)*step : Math.ceil(v/step)*step; }
+function domainFrom(vals,metric){
+  const m=METRICS[metric];
+  if(!vals.length) return {lo:0,hi:1};
+  let lo=roundTo(pct(vals,0.05),m.step,-1), hi=roundTo(pct(vals,0.95),m.step,1);
+  if(hi<=lo) hi=lo+m.step;
+  return {lo:+lo.toFixed(6), hi:+hi.toFixed(6)};
+}
+// Defaults: 5th-95th percentile over ALL homes at the default down%/rate.
+const domains={};
+Object.keys(METRICS).forEach(k=>{
+  const m=METRICS[k];
+  domains[k]=domainFrom(HOMES.map(h=>m.val(h,DEFAULT_DOWN,DEFAULT_RATE))
+                             .filter(v=>v!=null&&!Number.isNaN(v)), k);
+});
+// Auto = fit the CURRENT city view at the CURRENT slider settings.
+function autoFit(metric){
+  const m=METRICS[metric];
+  return domainFrom(activeHomes().map(h=>m.val(h,state.down,state.rate))
+                                 .filter(v=>v!=null&&!Number.isNaN(v)), metric);
+}
+
+const map=L.map("map",{preferCanvas:true,zoomControl:true}).setView([33.35,-111.80],11);
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  {maxZoom:19,attribution:""}).addTo(map);
+const layer=L.layerGroup().addTo(map);
+
+// city chips
+const chipBox=document.getElementById("cities");
+CITIES.forEach(c=>{
+  const el=document.createElement("div");
+  el.className="chip"+(c===state.city?" on":""); el.textContent=c; el.dataset.city=c;
+  el.onclick=()=>{state.city=c;
+    [...chipBox.children].forEach(x=>x.classList.toggle("on",x.dataset.city===c));
+    render(true);};
+  chipBox.appendChild(el);
+});
+document.getElementById("metric").onchange=e=>{state.metric=e.target.value;syncScaleInputs();render(false);};
+
+// color-scale min/max (each metric keeps its own range)
+const sminEl=document.getElementById("smin"), smaxEl=document.getElementById("smax");
+function syncScaleInputs(){
+  const m=METRICS[state.metric], d=domains[state.metric];
+  sminEl.step=m.step; smaxEl.step=m.step;
+  sminEl.value=d.lo; smaxEl.value=d.hi;
+}
+function onScaleEdit(){
+  const lo=parseFloat(sminEl.value), hi=parseFloat(smaxEl.value);
+  if(!Number.isNaN(lo)) domains[state.metric].lo=lo;
+  if(!Number.isNaN(hi)) domains[state.metric].hi=hi;
+  render(false);
+}
+sminEl.addEventListener("input",onScaleEdit);
+smaxEl.addEventListener("input",onScaleEdit);
+document.getElementById("auto").onclick=()=>{
+  domains[state.metric]=autoFit(state.metric);syncScaleInputs();render(false);};
+
+const downEl=document.getElementById("down"), rateEl=document.getElementById("rate");
+function syncLabels(){
+  document.getElementById("downVal").textContent=(+state.down).toFixed(1)+"%";
+  document.getElementById("rateVal").textContent=(+state.rate).toFixed(3)+"%";
+}
+downEl.addEventListener("input",e=>{state.down=+e.target.value;syncLabels();render(false);});
+rateEl.addEventListener("input",e=>{state.rate=+e.target.value;syncLabels();render(false);});
+document.getElementById("reset").onclick=()=>{
+  state.down=DEFAULT_DOWN;state.rate=DEFAULT_RATE;
+  downEl.value=DEFAULT_DOWN;rateEl.value=DEFAULT_RATE;syncLabels();render(false);
+};
+
+// deals filter
+const dealsOnlyEl=document.getElementById("dealsOnly"), dealMaxEl=document.getElementById("dealMax");
+dealsOnlyEl.addEventListener("change",e=>{state.dealsOnly=e.target.checked;render(true);});
+dealMaxEl.addEventListener("input",e=>{state.dealMax=+e.target.value;if(state.dealsOnly)render(true);});
+
+function activeHomes(){
+  let h = state.city==="All"?HOMES:HOMES.filter(x=>x.c===state.city);
+  if(state.dealsOnly) h=h.filter(x=> x.deal!=null && x.deal<=state.dealMax
+                                     && !(x.vconf && x.vconf.indexOf("low")===0));
+  return h;
+}
+
+function render(refit){
+  const m=METRICS[state.metric], homes=activeHomes();
+  const valOf=h=>m.val(h,state.down,state.rate);
+  const d=domains[state.metric], lo=d.lo, hi=d.hi, span=(hi>lo)?hi-lo:1;
+  const hasData=homes.some(h=>{const v=valOf(h);return v!=null && !Number.isNaN(v);});
+  document.getElementById("note").classList.toggle("show", state.metric==="ratio" && !hasData);
+
+  const ends = m.favorable==="low" ? [lo,hi] : [hi,lo];
+  t0.textContent=m.fmt(ends[0]); t1.textContent=m.fmt((lo+hi)/2); t2.textContent=m.fmt(ends[1]);
+
+  layer.clearLayers();
+  const bounds=[];
+  homes.forEach(h=>{
+    const v=valOf(h);
+    let color="#8b93a0";
+    if(v!=null && !Number.isNaN(v)){
+      let t=(v-lo)/span; if(m.favorable==="high") t=1-t;
+      color=ramp(t);
+    }
+    bounds.push([h.lat,h.lon]);
+    L.circleMarker([h.lat,h.lon],{radius:5,weight:1,color:"rgba(255,255,255,.85)",
+      fillColor:color,fillOpacity:.88})
+      .bindPopup(()=>popup(h),{maxWidth:260})
+      .addTo(layer);
+  });
+  document.getElementById("n").textContent=homes.length.toLocaleString();
+  if(refit && bounds.length) map.fitBounds(bounds,{padding:[40,40]});
+}
+
+function money(v){return v==null?"—":"$"+Math.round(v).toLocaleString();}
+function popup(h){
+  const b=Cost.costBreakdown(h.list,h.hoa,state.down/100,state.rate/100);
+  const meta=[h.t,(h.bd?h.bd+" bd":""),(h.ba?h.ba+" ba":""),(h.sf?(+h.sf).toLocaleString()+" sqft":"")]
+    .filter(Boolean).join(" · ");
+  let rows=
+    `<div class="pop-row"><span>List price</span><span>${money(h.list)}</span></div>`+
+    `<div class="pop-row"><span>Loan (${(+state.down).toFixed(1)}% down)</span><span>${money(b.loan)}</span></div>`+
+    `<div class="pop-row"><span>Monthly cost</span><span>${money(b.total)}</span></div>`;
+  if(h.pv!=null){
+    const d=h.deal, low=h.vconf&&h.vconf.indexOf("low")===0;
+    const cl=low?"var(--ink-dim)":(d<=-5?"#8ecae6":(d>=5?"#ffb3a7":"var(--ink-dim)"));
+    rows+=`<div class="pop-row"><span>Peer value</span><span>${money(h.pv)}</span></div>`+
+          `<div class="pop-row" style="color:${cl}"><span>Deal vs peers</span><span>${(d>0?"+":"")+d.toFixed(1)}%</span></div>`;
+    if(low) rows+=`<div class="pop-row" style="color:#ffd27f"><span>⚠ value est.</span><span>${h.vconf.replace("low:","low — ")}</span></div>`;
+  }
+  if(h.sf>0)  rows+=`<div class="pop-row"><span>Price ÷ living sqft</span><span>$${Math.round(h.list/h.sf)}/ft²</span></div>`;
+  if(h.lot>0) rows+=`<div class="pop-row"><span>Price ÷ lot sqft</span><span>$${(h.list/h.lot).toFixed(1)}/ft²</span></div>`;
+  if(h.rent!=null){
+    rows+=`<div class="pop-row"><span>Est. rent</span><span>${money(h.rent)}</span></div>`+
+          `<div class="pop-row"><span>Rent ÷ cost</span><span>${(h.rent/b.total).toFixed(2)}</span></div>`;
+    if(h.conf && h.conf.indexOf("low")===0)
+      rows+=`<div class="pop-row" style="color:#ffd27f"><span>⚠ rent est.</span><span>${h.conf.replace("low:","low — ")}</span></div>`;
+  }
+  return `<div class="pop-addr">${h.a}</div><div class="pop-meta">${h.c}, AZ — ${meta}</div>${rows}`;
+}
+
+// collapse / expand the settings panel
+const panel=document.getElementById("panel"), toggle=document.getElementById("toggle");
+function setCollapsed(on){
+  panel.classList.toggle("collapsed",on);
+  toggle.textContent=on?"+":"–";
+  toggle.title=on?"Expand settings":"Collapse settings";
+  try{localStorage.setItem("hhs_collapsed",on?"1":"0");}catch(e){}
+}
+toggle.onclick=()=>setCollapsed(!panel.classList.contains("collapsed"));
+try{ if(localStorage.getItem("hhs_collapsed")==="1") setCollapsed(true); }catch(e){}
+
+syncLabels();
+syncScaleInputs();
+render(true);
+})();
+</script>
+</body>
+</html>
