@@ -737,24 +737,24 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0;cursor:po
 .pop-meta{color:var(--ink-dim);margin-bottom:6px}
 .pop-row{display:flex;justify-content:space-between;gap:16px}
 .pop-row span:last-child{font-variant-numeric:tabular-nums}
-.attr{position:absolute;bottom:0;right:0;z-index:1000;font-size:10px;color:#cdd3da;
-  background:rgba(0,0,0,.45);padding:2px 6px;border-top-left-radius:6px}
 .sample{font-size:11px;color:#ffd27f;background:rgba(255,210,127,.1);border:1px solid rgba(255,210,127,.35);
   border-radius:8px;padding:7px 9px;margin:8px 0 2px;line-height:1.35}
-.brand-link{position:absolute;top:12px;right:12px;z-index:1000;font-size:12px;font-weight:600;
-  color:var(--ink);text-decoration:none;background:var(--panel);border:1px solid var(--panel-brd);
-  border-radius:8px;padding:6px 10px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.brand-link:hover{background:rgba(255,255,255,.14)}
+/* brand link lives inside the panel (never floats over the map / toggle) */
+.brand-link{display:inline-block;font-size:11px;color:var(--ink-dim);text-decoration:none;margin:0 0 6px}
+.brand-link:hover{color:var(--ink);text-decoration:underline}
+/* bottom disclaimer bar: always-visible notice + attribution, full width */
 .disclaimer{position:absolute;left:0;right:0;bottom:0;z-index:1001;
   background:rgba(12,15,20,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   border-top:1px solid var(--panel-brd);color:var(--ink-dim);
   padding:6px 12px calc(6px + env(safe-area-inset-bottom,0px));font-size:11.5px;line-height:1.4}
-.disclaimer summary{cursor:pointer;color:#ffd27f;font-weight:600;list-style:none}
-.disclaimer summary::-webkit-details-marker{display:none}
-.disclaimer summary::before{content:"⚠ ";}
-.disclaimer p{margin:6px 0 2px;max-width:70ch}
-.disclaimer[open] summary::after{content:" (tap to collapse)";font-weight:400;color:var(--ink-dim)}
-#map{bottom:0}
+.disclaimer details summary{cursor:pointer;color:#ffd27f;font-weight:600;list-style:none}
+.disclaimer details summary::-webkit-details-marker{display:none}
+.disclaimer details summary::before{content:"⚠ ";}
+.disclaimer details p{margin:6px 0 2px;max-width:70ch}
+.disclaimer details[open] summary::after{content:" (tap to collapse)";font-weight:400;color:var(--ink-dim)}
+.disclaimer .credit{font-size:10px;color:#8b93a0;margin-top:4px}
+/* keep the zoom control clear of the top-left panel and above the disclaimer bar */
+.leaflet-bottom.leaflet-right{bottom:58px}
 @media(max-width:480px){.panel{width:calc(100vw - 24px)}}
 </style>
 </head>
@@ -766,6 +766,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0;cursor:po
     <button id="toggle" class="toggle" title="Collapse" aria-label="Collapse settings">–</button>
   </div>
   <div id="pbody">
+  <a class="brand-link" href="https://haliteinvestments.com/">← Halite Investments</a>
   <p class="sub">Chandler · Mesa · Gilbert · Tempe — for-sale listings</p>
   <p class="sample">Sample / example data. Information has not been verified and calculations are still being refined.</p>
 
@@ -811,17 +812,18 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0;cursor:po
   <div class="count"><b id="n">0</b> homes shown</div>
   </div><!-- /pbody -->
 </div>
-<a class="brand-link" href="https://haliteinvestments.com/">← Halite Investments</a>
-<div class="attr">Imagery © Esri, Maxar, Earthstar Geographics · Listings via Redfin</div>
-<details class="disclaimer">
-  <summary>Sample / Example Data Notice</summary>
-  <p>The property data, rental estimates, valuations, monthly cost estimates, peer comparisons, and other
-  calculations shown on this page are currently provided for demonstration and evaluation purposes.
-  Information has not been independently verified and may be incomplete, outdated, or inaccurate.
-  Calculation methods and assumptions are still being refined. Do not rely on this information as a
-  substitute for verified MLS records, professional real estate advice, appraisal, lending information,
-  tax information, insurance estimates, or other professional guidance.</p>
-</details>
+<div class="disclaimer">
+  <details>
+    <summary>Sample / Example Data Notice</summary>
+    <p>The property data, rental estimates, valuations, monthly cost estimates, peer comparisons, and other
+    calculations shown on this page are currently provided for demonstration and evaluation purposes.
+    Information has not been independently verified and may be incomplete, outdated, or inaccurate.
+    Calculation methods and assumptions are still being refined. Do not rely on this information as a
+    substitute for verified MLS records, professional real estate advice, appraisal, lending information,
+    tax information, insurance estimates, or other professional guidance.</p>
+  </details>
+  <div class="credit">Imagery © Esri, Maxar, Earthstar Geographics · Listings via Redfin</div>
+</div>
 
 <script>
 /* Shared monthly-cost math for HaliteHomeSearch.
@@ -938,7 +940,8 @@ function autoFit(metric){
                                  .filter(v=>v!=null&&!Number.isNaN(v)), metric);
 }
 
-const map=L.map("map",{preferCanvas:true,zoomControl:true}).setView([33.35,-111.80],11);
+const map=L.map("map",{preferCanvas:true,zoomControl:false}).setView([33.35,-111.80],11);
+L.control.zoom({position:"bottomright"}).addTo(map);
 L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
   {maxZoom:19,attribution:""}).addTo(map);
 const layer=L.layerGroup().addTo(map);
