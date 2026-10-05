@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Halite Home Search</title>
-<meta name="description" content="Halite Home Search — map-based for-sale property explorer for the Phoenix East Valley. Sample/example data.">
+<meta name="description" content="Halite Home Search — interactive map of 1,293 for-sale homes in Chandler, Mesa, Gilbert, and Tempe, AZ, with rent, monthly-cost, and deal-vs-peers estimates. Requires JavaScript; sample/example data.">
 <link rel="canonical" href="https://haliteinvestments.com/home-search/">
 <link rel="icon" href="/assets/favicon.png" type="image/png">
 <meta name="robots" content="index,follow">
@@ -760,6 +760,14 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0;cursor:po
 </head>
 <body>
 <div id="map"></div>
+<noscript><div style="max-width:640px;margin:16px auto;padding:16px;color:#222;font-family:system-ui,sans-serif">
+<h1 style="font-size:18px;margin:0 0 8px">Halite Home Search</h1>
+<p>Interactive map of <b>1,293</b> for-sale homes in Chandler, Mesa, Gilbert, and Tempe, AZ, with
+rent, monthly-cost, and deal-vs-peers estimates. <b>This tool requires JavaScript</b> to display the map
+and listings. The underlying dataset is available at
+<a href="./homes.json">homes.json</a> (1,293 records).</p>
+<p style="font-size:13px;color:#555">Sample / example data — information has not been verified and calculations are still being refined.</p>
+</div></noscript>
 <div class="panel" id="panel">
   <div class="phead">
     <h1>Halite Home Search</h1>
@@ -806,10 +814,9 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0;cursor:po
     </div>
   </div>
 
-  <div class="note" id="note">No rent data loaded yet — markers shown neutral. Populate the
-    <code>rent</code> column to color by this ratio (the sliders will drive it live).</div>
+  <div class="note" id="note"></div>
 
-  <div class="count"><b id="n">0</b> homes shown</div>
+  <div class="count"><b id="n">1,293</b> homes shown</div>
   </div><!-- /pbody -->
 </div>
 <div class="disclaimer">
@@ -883,6 +890,7 @@ const DATA_URL = "./homes.json";
 let HOMES;
 try{ const _r = await fetch(DATA_URL, {cache:"no-store"}); if(!_r.ok) throw new Error("HTTP "+_r.status); HOMES = await _r.json(); }
 catch(e){ console.error("Home Search: could not load listing data", e); HOMES = []; }
+document.getElementById("note").textContent = "No rent data loaded yet — markers shown neutral.";
 const CITIES = ["All","Chandler","Mesa","Gilbert","Tempe"];
 const DEFAULT_DOWN = 5, DEFAULT_RATE = 6.25;
 
